@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jun 30 20:39:50 2026
+import SABER as sb
+import pandas as pd 
+import matplotlib.pyplot as plt 
+import numpy as np 
 
-@author: Luiz
-"""
+
 
 def join_heights(df_main, alts, ref_lon = -36):
     out = []
@@ -37,8 +37,7 @@ def plot_heights_vs_phase(phases, alts, res, period):
              f'Vz = {vz_ms:.2f} m/s\n' + 
              f'$\lambda_z$ = {lambda_z:.2f} km')
     
-    b.sci_format()
-    
+
     fig, ax = plt.subplots(
         
         figsize= (9, 6), 
