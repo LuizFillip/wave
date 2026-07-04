@@ -48,7 +48,36 @@ def fit_harmonic_phase(t, y, period):
         't_fit': t
     }
 
- 
+def vertical_phase_parameters(alt_km, phase_days, period):
+    alt_km = np.asarray(alt_km, dtype=float)
+    phase_days = np.asarray(phase_days, dtype=float)
+
+    idx = np.argsort(alt_km)
+    alt_km = alt_km[idx]
+    phase_days = phase_days[idx]
+
+    slope, intercept = np.polyfit(alt_km, phase_days, 1)
+
+    # comprimento de onda vertical
+    lambda_z_km = period / abs(slope)
+
+    # velocidade vertical de fase
+    vz_km_day = 1.0 / slope
+    vz_m_s = vz_km_day * 1000 / 86400
+
+    phase_fit = slope * alt_km + intercept
+
+    return {
+        "slope_days_per_km": slope,
+        "intercept_days": intercept,
+        "lambda_z_km": lambda_z_km,
+        "vz_km_day": vz_km_day,
+        "vz_m_s": vz_m_s,
+        "phase_fit": phase_fit,
+        "alt_km": alt_km
+    }
+
+
 def vertical_phase_speed(alt_km, phase_days):
     """
     Estima a velocidade vertical de fase a partir de um ajuste linear
@@ -88,18 +117,7 @@ def unwrap_phase_days(phase_days, period):
 
 
 
-def get_phases_mod(ds, period = 13, unwrap = True):
-   
-    phases = []
-    altitudes = ds.columns
-   
-    for col in altitudes:
-        fit = fit_harmonic_phase(ds.index, ds[col], period)
-        phases.append(fit['phase_days_mod'])
-    if unwrap:
-        return unwrap_phase_days(phases, period= period)
-    else:
-        return phases 
+
 
  
 

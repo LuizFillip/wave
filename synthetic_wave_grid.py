@@ -65,18 +65,21 @@ def create_synthetic_wave_grid(
 
     return ds
 
-ds = create_synthetic_wave_grid()
-
-Z = ds.values
-x, y = ds.columns, ds.index 
-
-fig, ax = plt.subplots()
-
-levels = np.linspace(-1, 1, 30)
-img = ax.contourf(
-    x, y, Z,
-    cmap='turbo',
+def show_grid():
+    ds = create_synthetic_wave_grid()
     
-    levels = 70
-    # levels = levels
-    )
+    Z = ds.values
+    x, y = ds.columns, ds.index 
+    
+    fig, ax = plt.subplots()
+    
+    levels = np.linspace(-1, 1, 30)
+    img = ax.contourf(
+        x, y, Z,
+        cmap='turbo',
+        
+        levels = 70
+        # levels = levels
+        )
+    
+    

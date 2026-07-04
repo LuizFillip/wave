@@ -1,2 +1,2 @@
-from .harmonic_phases import * 
-from .synthetic_wave_grid import *
+from .synthetic_wave_grid import create_synthetic_wave_grid
+from .hamornic_phases import * 
