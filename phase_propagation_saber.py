@@ -8,10 +8,14 @@ import base as b
 b.sci_format()
 
 def join_heights(
-        df_main, alts,
+        df_main,
+        alts,
         bandpass = (3, 15),
         lat_center = -7, 
-        ref_lon = -35
+        ref_lon = -35,
+        lon_step = 20,
+        lat_step = 20,
+        normalize = True
         ):
     out = []
     desc = 'Selecting Layers'
@@ -21,7 +25,10 @@ def join_heights(
                 f'temp_{alt}', 
                 lat_center = lat_center,
                 bandpass = bandpass,
-                normalize = False
+                normalize = normalize,
+                lon_stride = None, 
+                lon_step = lon_step,
+                lat_step = lat_step,
                
                 )
         ds = df.loc[df.index == ref_lon].T
@@ -31,24 +38,6 @@ def join_heights(
     return pd.concat(out, axis = 1)
 
 
- 
-
-
-
-def get_phases_mod(ds, period = 13, unwrap = True):
-   
-    phases = []
-    altitudes = ds.columns
-   
-    for col in altitudes:
-        fit = wv.fit_harmonic_phase(ds.index, ds[col], period)
-        phases.append(fit['phase_days_mod'])
-        
-    if unwrap:
-        return wv.unwrap_phase_days(phases, period= period)
-    else:
-        return phases 
-
 args = dict(
     linestyle = 'none',
     fillstyle = 'none',
@@ -56,21 +45,29 @@ args = dict(
     markersize = 20,
     capsize = 5
     )
+
+
    
 def plot_heights_vs_phase(
         ax, ds, period
         ):
     
     res = wv.vertical_phase_parameters(
-        ds.index, ds['phase_days_mod'].values, period)
+        ds.index, ds['phase_days_mod'].values, 
+        period
+        )
+    
+    print(res)
+    
+    lz_std = round(res['lambda_z_std'])
 
-    vz_ms = res['vz_m_s']
-    lambda_z = res['vz_km_day'] * period
+    vz_ms = abs(res['vz_km_day'])
+    lambda_z = abs(res['vz_km_day'] * period)
     
     infos = (
         f'T = {period} days\n' + 
-        f'Vz = {vz_ms:.2f} m/s\n' + 
-        f'$\lambda_z$ = {lambda_z:.2f} km'
+        f'Vz = {vz_ms:.2f} km/day\n' + 
+        f'$\lambda_z$ = {lambda_z:.2f} $\pm$ {lz_std} km '
         )
    
  
@@ -95,11 +92,15 @@ def plot_heights_vs_phase(
            )
     
     ax.text(
-        0.05, 0.8, 
+        0.05, 0.7, 
         infos, 
         fontsize = 25,
         transform = ax.transAxes
         )
+    
+    return None 
+
+
 
 def plot_heights_vs_amplitude(ax, ds, color = 'blue'):
     
@@ -134,7 +135,7 @@ def plot_heights_vs_amplitude(ax, ds, color = 'blue'):
     
     ax.plot(amplitude_fit, ds.index, '-', lw = 3, color = color)
     
-    print(slope)
+    # print(slope)
     
     
 def plot_phase_amplitude_propagations(ds, period):
@@ -151,44 +152,62 @@ def plot_phase_amplitude_propagations(ds, period):
     
     return fig, ax
 
+
+
+
+def filter_interval_and_fitting_data(
+        ds_all, start, end, period
+        ):
+    ds = ds_all.loc[
+        (ds_all.index >= start) & 
+        (ds_all.index <= end )
+        ].copy()
+       
+    phases = []
+    altitudes = ds.columns
+    
+    for col in altitudes:
+    
+        fit = wv.fit_harmonic_phase(ds.index, ds[col], period)
+        phases.append(pd.DataFrame(fit, index = [col]) )
+        
+    df = pd.concat(phases)
+    
+    df['phase_days_mod'] = wv.unwrap_phase_days(
+        df['phase_days_mod'], 
+        period = period
+        )
+        
+    return df 
+
+
 df_main = sb.saber_data( )
  
+
 alts = np.arange(20, 110, 10)
-lat_center = 7
+lat_center = -7
+ref_lon = -30
+
+
 ds_all = join_heights(
-    df_main, alts,
-    lat_center = lat_center, ref_lon = -35)
- 
-
- 
-
-
-ds = ds_all.loc[
-    (ds_all.index >= 50) & 
-    (ds_all.index <= 100)
-    ].copy()
-
- 
-period = 5
- 
-
-phases = []
-altitudes = ds.columns
-
-for col in altitudes:
-
-    fit = wv.fit_harmonic_phase(ds.index, ds[col], period)
-    phases.append(pd.DataFrame(fit, index = [col]) )
-    
-df = pd.concat(phases)
-
-df['phase_days_mod'] = wv.unwrap_phase_days(
-    df['phase_days_mod'], 
-    period = period
+    df_main, 
+    alts,
+    bandpass = (2.2, 13),
+    lat_center = lat_center,
+    ref_lon = ref_lon
     )
-    
-df 
+ 
+ 
 
+#%%%%
+ 
+
+period =  5.5
+start, end = 50, 100
+
+df =  filter_interval_and_fitting_data(ds_all, start, end, period)
 fig, ax = plot_phase_amplitude_propagations(df, period)
 
-ax.set(title = f'Center latitude {lat_center}°')
+fig.suptitle(f'Center latitude {lat_center}°, Longitude {ref_lon}°, DOYs ({start}-{end})')
+
+
