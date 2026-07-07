@@ -149,7 +149,7 @@ ds = ds.loc[:,
 
 results_by_period = {}
 for period in np.arange(4, 7, 0.25):
-    ds1 = wv.filter_interval_and_fitting_data(
+    ds1 = wv.get_wave_parameters_for_alts(
             ds, start, end, period
             )
     

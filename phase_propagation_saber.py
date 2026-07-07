@@ -131,13 +131,8 @@ def plot_phase_amplitude_propagations(ds, period):
 
 
 
-def filter_interval_and_fitting_data(
-        ds_all, start, end, period
-        ):
-    ds = ds_all.loc[
-        (ds_all.index >= start) & 
-        (ds_all.index <= end )
-        ].copy()
+def get_wave_parameters_for_alts( ds, period):
+
        
     phases = []
     altitudes = ds.columns
@@ -145,7 +140,9 @@ def filter_interval_and_fitting_data(
     for col in altitudes:
     
         fit = wv.fit_harmonic_phase(ds.index, ds[col], period)
-        phases.append(pd.DataFrame(fit, index = [col]) )
+        phases.append(
+            pd.DataFrame(fit, index = [col]) 
+            )
         
     df = pd.concat(phases)
     
@@ -165,11 +162,25 @@ def phase_analysis(
         period = 5.5,
         limits =( 50, 100)
         ):
-  
+    
+        
+    df_main = sb.saber_data('SABER/data/saber_mean_alts')
+       
+      
+    alts = np.arange(20, 110, 10)
+    lat_center =  -7
+    ref_lon = -30
+    ds_all = sb.join_heights_by_lon_ref(
+         df_main, 
+         bandpass = (2.2, 15),
+         lat_center = lat_center,
+         ref_lon = ref_lon
+         )
+     
+      
     start, end = limits
     
-    df =  filter_interval_and_fitting_data(
-        ds_all, start, end, period)
+    df =  get_wave_parameters_for_alts(ds_all,  period)
     
     df.index = alts
     fig, ax = plot_phase_amplitude_propagations(df, period)
@@ -178,26 +189,13 @@ def phase_analysis(
     
     df 
     
-    
-df_main = sb.saber_data('SABER/data/saber_mean_alts')
-   
-  
-alts = np.arange(20, 110, 10)
-lat_center =  -7
-ref_lon = -30
-ds_all = sb.join_heights_by_lon_ref(
-     df_main, 
-     bandpass = (2.2, 15),
-     lat_center = lat_center,
-     ref_lon = ref_lon
-     )
- 
 
-phase_analysis(
-    ds_all, 
-    alts, 
-    lat_center, 
-    ref_lon,
-    period = 6,
-    limits =( 50, 100)
-    )
+
+# phase_analysis(
+    # ds_all, 
+    # alts, 
+    # lat_center, 
+    # ref_lon,
+    # period = 6,
+    # limits =( 50, 100)
+    # )
