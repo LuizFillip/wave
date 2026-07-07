@@ -1,35 +1,10 @@
-import matplotlib.pyplot as plt 
-import SSW25PW as p 
 import numpy as np 
 from scipy import stats
 import pandas as pd 
 import waves as wv 
 import SABER as sb 
 
-def plot_LS_and_fluctuations(ds):
-  
-    fig, ax = plt.subplots(dpi = 300)
-    
-    q6d = []
-    for i, col in enumerate(ds.columns):
-        time, sst = ds.index, ds[col].values
-        
-        results = p.plot_LombScargle(
-            ax, time, sst, 
-            period_min = 2,
-            period_max = 20, 
-            )
-        
-        for r in results:
-            period = r['period']
-            if period > 4 and period < 7:
-                q6d.append(period)
-    
-    
-    ax.set(ylim = [0, 0.5])
-    
-    
-    np.mean(q6d) 
+
     
 
 
@@ -139,48 +114,56 @@ def evaluate_vertical_wave_periods(results_by_period):
 
 
 
-df_main = sb.saber_data( )
+df_main = sb.saber_data('SABER/data/saber_mean_2025')
  
 
-alts = np.arange(20, 110, 10)
+
+alts = np.arange(20, 110, 5)
 lat_center = -7
 ref_lon = -30
+
+
 ds_all = wv.join_heights(
     df_main, 
-    alts,
+    bandpass = (2.2, 13),
     lat_center = lat_center,
     ref_lon = ref_lon
     )
- 
-start, end = 50, 100
+
+
+#%%%%
+
+
+start, end = 36, 51
 
 ds = ds_all.loc[
     (ds_all.index >= start) & 
     (ds_all.index <= end )
     ].copy()
   
-  
-  
-  
+
+ds.columns = alts
+ds = ds.loc[:, 
+            (ds.columns >= 30) & 
+            (ds.columns <= 100)]
+
 results_by_period = {}
 for period in np.arange(4, 7, 0.25):
     ds1 = wv.filter_interval_and_fitting_data(
-            ds_all, start, end, period
+            ds, start, end, period
             )
     
     results_by_period[period] = ds1
     
 metrics = evaluate_vertical_wave_periods(results_by_period)
-
+ 
 print(metrics[[
     "period",
     "score",
-    "r2_phase_altitude",
-    "rmse_phase_days",
-    "phase_std_median_days",
+    "r2_phase_altitude", 
     "lambda_z_km",
     "vz_ms"
 ]])
 
-best_period = metrics.iloc[0]["period"]
-print("Best period:", best_period)
+# best_period = metrics.iloc[0]["period"]
+# print("Best period:", best_period)

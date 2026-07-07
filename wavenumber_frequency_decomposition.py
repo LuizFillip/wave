@@ -9,14 +9,15 @@ import base as b
 df = sb.saber_data()
  
 value_col = "temp_90"
-lat_center = -
+lat_center = -7
+step = 25
 ds = sb.box_groupy_process(
         df, 
         value_col, 
         lat_center = lat_center, 
         bandpass = (2.2, 15),
-        lon_step = 20,
-        lat_step = 20,
+        lon_step = step,
+        lat_step = step,
         lon_stride = None
         )
  
@@ -37,12 +38,15 @@ def hanning_remove_tendency(T):
     T = T * wlon * wtime
     return T
  
+    
+#%%%%
+
 def zonal_propagation(ds, period_min=3, period_max=20):
     lon = ds.index.values.astype(float)
     doy = ds.columns.values.astype(float)
   
-    T =  hanning_remove_tendency(ds.values.astype(float))
-    # T = ds.values.astype(float)
+    # T =  hanning_remove_tendency(ds.values.astype(float))
+    T = ds.values.astype(float)
      
     # dlon = (lon[1] - lon[0]) / 360.0
     
@@ -124,10 +128,11 @@ def plot_zonalnumber_decomposition(
         fontsize=fontsize, color="k"
         )
 
-    for p in [5, 11]:
+    for p in [5, 12]:
         ax.axhline(p, linestyle = ":", color="k", linewidth=1)
+    for v in [-3, -1, 1]:
+        ax.axvline(v, linestyle ='--')
         
-    ax.axvline(-4, linestyle ='--')
     ax.set(
         xlabel="Zonal wave number",
         ylabel="Period (days)",
@@ -152,7 +157,11 @@ def plot_zonalnumber_decomposition(
     return None
 
 
-
+start, end = 50, 100
+ds1 = ds.loc[:,
+    (ds.columns >= start) & 
+    (ds.columns <= end )
+    ].copy()
 
 import pandas as pd 
 from scipy.ndimage import gaussian_filter
@@ -163,24 +172,23 @@ fig, ax = plt.subplots(
     dpi = 300
     )
 
-plot_zonalnumber_decomposition( ax[1], ds )
+plot_zonalnumber_decomposition( ax[1], ds1)
 
 
-# ds1 = pd.DataFrame(
-#       gaussian_filter( 
-#           ds.to_numpy(), 
-#           sigma = 0.5
-#           ),
-#       index = ds.index,
-#       columns = ds.columns
-#   )
+ds = pd.DataFrame(
+      gaussian_filter( 
+          ds1.to_numpy(), 
+          sigma = 0.7
+          ),
+      index = ds1.index,
+      columns = ds1.columns
+  )
 
-ds1 = ds.copy()
- 
+  
 ax[0].contourf(
-      ds1.columns, 
-      ds1.index, 
-      ds1.values,
+      ds.columns, 
+      ds.index, 
+      ds.values,
       cmap = 'seismic',
       levels = 50
       # levels = np.linspace(-1, 1, 30)
