@@ -1,41 +1,12 @@
 import SABER as sb
 import pandas as pd 
 import matplotlib.pyplot as plt 
-import numpy as np 
-from tqdm import tqdm 
+import numpy as np  
 import waves as wv
 import base as b 
 b.sci_format()
 
-def join_heights(
-        df_main,
-        alts,
-        bandpass = (3, 15),
-        lat_center = -7, 
-        ref_lon = -35,
-        lon_step = 20,
-        lat_step = 20,
-        normalize = True
-        ):
-    out = []
-    desc = 'Selecting Layers'
-    for alt in tqdm(alts, desc):
-        df = sb.box_groupy_process(
-                df_main, 
-                f'temp_{alt}', 
-                lat_center = lat_center,
-                bandpass = bandpass,
-                normalize = normalize,
-                lon_stride = None, 
-                lon_step = lon_step,
-                lat_step = lat_step,
-               
-                )
-        ds = df.loc[df.index == ref_lon].T
-        ds = ds.rename(columns = {ref_lon: alt})
-        out.append(ds)
-        
-    return pd.concat(out, axis = 1)
+
 
 
 args = dict(
@@ -53,11 +24,11 @@ def plot_heights_vs_phase(
         ):
     
     res = wv.vertical_phase_parameters(
-        ds.index, ds['phase_days_mod'].values, 
+        ds.index, 
+        ds['phase_days_mod'].values, 
         period
         )
     
-    print(res)
     
     lz_std = round(res['lambda_z_std'])
 
@@ -133,7 +104,12 @@ def plot_heights_vs_amplitude(ax, ds, color = 'blue'):
     
     amplitude_fit = slope * ds.index + intercept
     
-    ax.plot(amplitude_fit, ds.index, '-', lw = 3, color = color)
+    ax.plot(
+        amplitude_fit, 
+        ds.index, '-',
+        lw = 3,
+        color = color
+        )
     
     # print(slope)
     
@@ -180,34 +156,48 @@ def filter_interval_and_fitting_data(
         
     return df 
 
-
-df_main = sb.saber_data( )
- 
-
+  
+def phase_analysis(
+        ds_all, 
+        alts, 
+        lat_center, 
+        ref_lon,
+        period = 5.5,
+        limits =( 50, 100)
+        ):
+  
+    start, end = limits
+    
+    df =  filter_interval_and_fitting_data(
+        ds_all, start, end, period)
+    
+    df.index = alts
+    fig, ax = plot_phase_amplitude_propagations(df, period)
+    
+    fig.suptitle(f'Center latitude {lat_center}°, Longitude {ref_lon}°, DOYs ({start}-{end})')
+    
+    df 
+    
+    
+df_main = sb.saber_data('SABER/data/saber_mean_alts')
+   
+  
 alts = np.arange(20, 110, 10)
-lat_center = -7
+lat_center =  -7
 ref_lon = -30
+ds_all = sb.join_heights_by_lon_ref(
+     df_main, 
+     bandpass = (2.2, 15),
+     lat_center = lat_center,
+     ref_lon = ref_lon
+     )
+ 
 
-
-ds_all = join_heights(
-    df_main, 
-    alts,
-    bandpass = (2.2, 13),
-    lat_center = lat_center,
-    ref_lon = ref_lon
+phase_analysis(
+    ds_all, 
+    alts, 
+    lat_center, 
+    ref_lon,
+    period = 6,
+    limits =( 50, 100)
     )
- 
- 
-
-#%%%%
- 
-
-period =  5.5
-start, end = 50, 100
-
-df =  filter_interval_and_fitting_data(ds_all, start, end, period)
-fig, ax = plot_phase_amplitude_propagations(df, period)
-
-fig.suptitle(f'Center latitude {lat_center}°, Longitude {ref_lon}°, DOYs ({start}-{end})')
-
-
