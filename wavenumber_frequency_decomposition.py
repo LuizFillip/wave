@@ -6,21 +6,7 @@ from scipy import signal
 import base as b 
 
 
-df = sb.saber_data()
- 
-value_col = "temp_100"
-lat_center = -7
-step = 20
-ds = sb.box_groupy_process(
-        df, 
-        value_col, 
-        lat_center = lat_center, 
-        bandpass = (2.2, 15),
-        lon_step = step,
-        lat_step = step,
-        lon_stride = None
-        )
- 
+
 def hanning_remove_tendency(T):
     
     T = T - np.nanmean(T)
@@ -78,7 +64,11 @@ def zonal_propagation(ds, period_min=3, period_max=20):
 def plot_zonalnumber_decomposition(
         ax,  ds,
         period_min = 2.5, 
-        period_max = 20
+        period_max = 20,
+        y = 0.85,
+        x = 0.05,
+        fontsize = 30,
+        colorbar = False
         ):
     
     
@@ -94,39 +84,44 @@ def plot_zonalnumber_decomposition(
         cmap="turbo"
     )
 
-    ax.axvline(0, color="k", linewidth=1.2)
+    ax.axvline(0, color="w", linewidth=1.2)
     
-    y = 0.85
-    fontsize = 30
+   
     ax.text(
-        0.05, y, "Westward", 
-        transform=ax.transAxes,
-        ha="left", va="bottom", 
-        fontsize=fontsize, color="k"
+        x, y, "Westward", 
+        transform = ax.transAxes,
+        ha ="left",
+        va = "bottom", 
+        fontsize=fontsize, 
+        color="k"
         )
 
     ax.text(
-        0.75, y, "Eastward", 
-        transform=ax.transAxes,
-        ha="left", va="bottom",
-        fontsize=fontsize, color="k"
+        0.6 + x, y, "Eastward", 
+        transform = ax.transAxes,
+        ha = "left",
+        va = "bottom",
+        fontsize = fontsize, 
+        color="k"
         )
 
-    for p in [5, 12]:
-        ax.axhline(p, linestyle = ":", color="k", linewidth=1)
-    for v in [-3, -1, 1]:
+ 
+    for v in [-3, -1, 1, 3]:
         ax.axvline(v, linestyle ='--')
         
     ax.set(
-        xlabel="Zonal wave number",
-        ylabel="Period (days)",
-        xlim = (-5, 5),
+        xlabel= "Zonal wave number",
+        ylabel= "Period (days)",
+        xlim = [-5, 5],
         xticks = np.arange(-5, 6, 1),
-        ylim = (period_min, period_max)
+        ylim = [period_min, period_max - 5],
+        yticks = np.arange(3, 15, 2),
+        
     )
+    
+    if colorbar:
 
-
-    b.colorbar(
+        b.colorbar(
             img, 
             ax,  
             label = 'Normalized log power', 
@@ -134,51 +129,105 @@ def plot_zonalnumber_decomposition(
             width = "3%",
             orientation = "vertical", 
             anchor = (.1, 0., 1, 1)
-            )
-    # cbar.set_label("Normalized log power")
- 
+            ) 
+     
    
     return None
 
 
+def test_data():
+    df = sb.saber_data()
+     
+    value_col = "temp_100"
+    lat_center = -7
+    step = 20
+    ds = sb.box_groupy_process(
+            df, 
+            value_col, 
+            lat_center = lat_center, 
+            bandpass = (2.2, 15),
+            lon_step = step,
+            lat_step = step,
+            lon_stride = None
+            )
+     
+    start, end = 50, 100
+    ds1 = ds.loc[:,
+        (ds.columns >= start) & 
+        (ds.columns <= end )
+        ].copy()
 
 
-start, end = 50, 100
-ds1 = ds.loc[:,
-    (ds.columns >= start) & 
-    (ds.columns <= end )
-    ].copy()
+def wavenumber_for_all_altitudes(
+        
+        df ,
+        lat_center = -7,
+        bandpass = (3, 7),
+        normalize = True,
+        lon_step = 20,
+        lat_step = 20,
+        lon_stride = None, 
+        year = 2025
+        ):
+ 
+    alts = np.arange(20, 110, 10)
+    
+    fig, ax = plt.subplots(
+        figsize = (16, 12),
+        nrows = 3, ncols = 3)
+    
+    plt.subplots_adjust(wspace = 0.1)
+    l = b.letters()
+    
+    for i, ax in enumerate(ax.flat):
+        alt = alts[i]
+        value_col = f'temp_{alt}'
+        
+        ds = sb.box_groupy_process(
+                df, 
+                value_col, 
+                lat_center = lat_center,
+                bandpass = bandpass,
+                normalize = normalize,
+                lon_step = lon_step,
+                lat_step = lat_step,
+                lon_stride = lon_stride
+                )
+        
+        start, end = 50, 100
+        ds1 = ds.loc[:,
+            (ds.columns >= start) & 
+            (ds.columns <= end )
+            ].copy()
+        
+        plot_zonalnumber_decomposition(
+                ax, 
+                ds1,
+                period_min = 2.5, 
+                period_max = 20, 
+                fontsize = 20
+                )
+        
+        ax.set(title = f'({l[i]}) {alt} km',)
+        if i != 6:
+            ax.set(
+                yticklabels = [],
+                xticklabels = [],
+                xlabel = '',
+                ylabel = ''
+                
+                )
 
-import pandas as pd 
-from scipy.ndimage import gaussian_filter
+df = sb.saber_data()
 
-fig, ax = plt.subplots(
-    figsize = (12, 10),
-    nrows = 2, 
-    dpi = 300
-    )
-
-plot_zonalnumber_decomposition( ax[1], ds1)
-
-
-ds = pd.DataFrame(
-      gaussian_filter( 
-          ds1.to_numpy(), 
-          sigma = 0.7
-          ),
-      index = ds1.index,
-      columns = ds1.columns
-  )
-
-  
-ax[0].contourf(
-      ds.columns, 
-      ds.index, 
-      ds.values,
-      cmap = 'seismic',
-      levels = 50
-      # levels = np.linspace(-1, 1, 30)
-      )
-
-
-# # ds = wv.create_synthetic_wave_grid()
+wavenumber_for_all_altitudes(
+        
+        df ,
+        lat_center = -7,
+        bandpass = (3, 15),
+        normalize = True,
+        lon_step = 20,
+        lat_step = 20,
+        lon_stride = None, 
+        year = 2025
+        )
