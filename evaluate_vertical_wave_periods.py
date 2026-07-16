@@ -71,8 +71,7 @@ def evaluate_vertical_wave_periods(results_by_period):
         amp_slope, amp_intercept, amp_r, amp_p, amp_stderr = stats.linregress(z, amp)
 
         rows.append({
-            "period": period,
-            "n_altitudes": len(data),
+            "period": period, 
             "r2_phase_altitude": r2,
             "rmse_phase_days": rmse,
             "phase_std_mean_days": phase_std_mean,
@@ -114,44 +113,42 @@ def evaluate_vertical_wave_periods(results_by_period):
 
 
 
-df_main = sb.saber_data('SABER/data/saber_mean_2025')
+
+infile = 'SABER/data/saber_mean_20251'
+df_main = sb.saber_data(infile)
  
 
+alts = [int(c[5:]) for c in df_main.columns if 'temp' in c]
 
-alts = np.arange(20, 110, 5)
+
 lat_center = -7
 ref_lon = -30
 
 
-ds_all = wv.join_heights(
-    df_main, 
-    bandpass = (2.2, 13),
-    lat_center = lat_center,
-    ref_lon = ref_lon
-    )
+ds_all = sb.join_heights_by_lon_ref(
+     df_main, 
+     bandpass = (2.2, 15),
+     lat_center = lat_center,
+     ref_lon = ref_lon,
+     normalize = False
+     )
 
-
-#%%%%
-
-
-start, end = 36, 51
+start, end = 60, 90
 
 ds = ds_all.loc[
     (ds_all.index >= start) & 
     (ds_all.index <= end )
     ].copy()
-  
-
 ds.columns = alts
-ds = ds.loc[:, 
-            (ds.columns >= 30) & 
-            (ds.columns <= 100)]
+
+
+
+
+ds.columns = alts 
 
 results_by_period = {}
 for period in np.arange(4, 7, 0.25):
-    ds1 = wv.get_wave_parameters_for_alts(
-            ds, start, end, period
-            )
+    ds1 = wv.get_wave_parameters_for_alts( ds,  period)
     
     results_by_period[period] = ds1
     
@@ -165,5 +162,9 @@ print(metrics[[
     "vz_ms"
 ]])
 
-# best_period = metrics.iloc[0]["period"]
-# print("Best period:", best_period)
+# # best_period = metrics.iloc[0]["period"]
+# # print("Best period:", best_period)
+ 
+ 
+
+            
