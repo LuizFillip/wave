@@ -106,14 +106,14 @@ def plot_zonalnumber_decomposition(
         )
 
  
-    for v in [-3, -1, 1, 3]:
+    for v in [-3, -1, 0, 1, 3]:
         ax.axvline(v, linestyle ='--')
         
     ax.set(
-        xlabel= "Zonal wave number",
-        ylabel= "Period (days)",
-        xlim = [-5, 5],
-        xticks = np.arange(-5, 6, 1),
+        # xlabel= "Zonal wave number",
+        # ylabel= "Period (days)",
+        # xlim = [-5, 5],
+        # xticks = np.arange(-5, 6, 1),
         ylim = [period_min, period_max - 5],
         yticks = np.arange(3, 15, 2),
         
@@ -139,7 +139,7 @@ def test_data():
     df = sb.saber_data()
      
     value_col = "temp_100"
-    lat_center = -7
+    lat_center = 0
     step = 20
     ds = sb.box_groupy_process(
             df, 
@@ -174,7 +174,11 @@ def wavenumber_for_all_altitudes(
     
     fig, ax = plt.subplots(
         figsize = (16, 12),
-        nrows = 3, ncols = 3)
+        nrows = 3,
+        ncols = 3, 
+        sharex = True, 
+        sharey = True
+        )
     
     plt.subplots_adjust(wspace = 0.1)
     l = b.letters()
@@ -194,7 +198,7 @@ def wavenumber_for_all_altitudes(
                 lon_stride = lon_stride
                 )
         
-        start, end = 50, 100
+        start, end = 60, 90
         ds1 = ds.loc[:,
             (ds.columns >= start) & 
             (ds.columns <= end )
@@ -209,25 +213,33 @@ def wavenumber_for_all_altitudes(
                 )
         
         ax.set(title = f'({l[i]}) {alt} km',)
-        if i != 6:
+        if i < 6:
             ax.set(
-                yticklabels = [],
-                xticklabels = [],
+                # yticklabels = [],
+                # xticklabels = [],
                 xlabel = '',
                 ylabel = ''
                 
                 )
+            
+    return None 
 
-df = sb.saber_data()
-
-wavenumber_for_all_altitudes(
-        
-        df ,
-        lat_center = -7,
-        bandpass = (3, 15),
-        normalize = True,
-        lon_step = 20,
-        lat_step = 20,
-        lon_stride = None, 
-        year = 2025
-        )
+def main():
+    path = 'SABER/data/saber_mean_2025'
+    df = sb.saber_data(path)
+    
+    step = 20
+    wavenumber_for_all_altitudes(
+            
+            df ,
+            lat_center = -7,
+            bandpass = (3, 15),
+            normalize = True,
+            lon_step = step,
+            lat_step = step,
+            lon_stride = None, 
+            year = 2025
+            )
+    
+    
+# main()
