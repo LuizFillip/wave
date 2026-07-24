@@ -114,7 +114,7 @@ def evaluate_vertical_wave_periods(results_by_period):
 
 
 
-infile = 'SABER/data/saber_mean_20251'
+infile = 'SABER/data/saber_mean_2025'
 df_main = sb.saber_data(infile)
  
 
@@ -127,18 +127,15 @@ ref_lon = -30
 
 ds_all = sb.join_heights_by_lon_ref(
      df_main, 
-     bandpass = (2.2, 15),
+     bandpass = (2.2, 12),
      lat_center = lat_center,
      ref_lon = ref_lon,
      normalize = False
      )
+ 
+start, end = 50, 90
 
-start, end = 60, 90
-
-ds = ds_all.loc[
-    (ds_all.index >= start) & 
-    (ds_all.index <= end )
-    ].copy()
+ds = ds_all.loc[ (ds_all.index >= start) & (ds_all.index <= end) ].copy()
 ds.columns = alts
 
 
@@ -147,7 +144,7 @@ ds.columns = alts
 ds.columns = alts 
 
 results_by_period = {}
-for period in np.arange(4, 7, 0.25):
+for period in np.arange(5, 7, 0.1):
     ds1 = wv.get_wave_parameters_for_alts( ds,  period)
     
     results_by_period[period] = ds1

@@ -84,20 +84,6 @@ def get_wave_parameters_for_alts( ds, period):
     return df 
 
 
-df_main = sb.saber_data('SABER/data/saber_mean_2025')
-   
-  
-alts = [int(c[5:]) for c in df_main.columns if 'temp' in c]
-
-ds_all = sb.join_heights_by_lon_ref(
-     df_main, 
-     bandpass = (2.2, 15),
-     lat_center = -7,
-     ref_lon = -30,
-     normalize = False,
-     )
-
-#%%%%
 
 def plot_heights_vs_phase(
         ax, ds, period,
@@ -209,15 +195,16 @@ def plot_heights_vs_amplitude(ax, ds, color = 'blue'):
 
 
 def phase_analysis(
-        
-         ds_all,
+        ds_all, 
+        alts,
         lat_center =  -7, 
         ref_lon = -30,
         period = 5.5,
         limits =( 50, 100)
         ):
     
-    
+ 
+
     start, end = limits
     
     ds_lim = ds_all.loc[ 
@@ -261,15 +248,26 @@ def phase_analysis(
     
     return fig 
     
-
-
- 
-fig = phase_analysis(
-    ds_all,
-    lat_center =  -7,
-    period = 6.25,
-    limits = (60, 90)
-    )
-
-
-ds_all 
+def main():
+    df_main = sb.saber_data('SABER/data/saber_mean_2025')
+       
+      
+    
+    ds_all = sb.join_heights_by_lon_ref(
+         df_main, 
+         bandpass = (2.2, 15),
+         lat_center = -7,
+         ref_lon = -30,
+         normalize = False,
+         ) 
+    alts = [int(c[5:]) for c in df_main.columns if 'temp' in c]
+    
+    fig = phase_analysis(
+        ds_all,
+        lat_center =  -7,
+        period = 6.25,
+        limits = (60, 90)
+        )
+    
+    
+    ds_all 
