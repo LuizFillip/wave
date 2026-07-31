@@ -15,29 +15,24 @@ cmap_vik = "coolwarm"
 # =============================================================================
 
 onda = 6
-data_plot = "2025-02-21"
+dn = "2025-02-21"
 
 filepath = Path(f"JAWARA/data/ep_divs_q{onda}.nc")
-
-out_dir = Path(r"D:/database/JAWARA/no_filter/imgs")
-out_dir.mkdir(parents=True, exist_ok=True)
-
-salvar_figura = True
-
+ 
 R_E = 6371.0
 H = 7.0
 
 lat_min_lim = 0.0
-lat_max_lim = 87.0
+lat_max_lim = 90.0
 
-z_min_lim = 5.0
-z_max_lim = 90.0
+z_min_lim = 10.0
+z_max_lim = 120.0
 
 stride_lat = 1
 stride_z = 2
 
-escala_viz = 15.0
-fator_escala_z = 100.0
+escala_viz = 25.0
+fator_escala_z = 200.0
 
 
 # =============================================================================
@@ -351,6 +346,7 @@ def correct_vector_aspect(
 # =============================================================================
 
 def plot_ep_flux(
+        fig, ax,
     lat,
     z,
     acceleration,
@@ -366,27 +362,15 @@ def plot_ep_flux(
     z_min,
     z_max,
     visual_scale=15.0,
-    output_file=None
+    vmax = 5
 ):
-    """Gera o gráfico de fluxo EP e aceleração zonal."""
 
-    plt.rcParams.update({"font.size": 17})
+    # ax.set_xlim(lat_min, lat_max)
+    # ax.set_ylim(z_min, z_max)
 
-    fig, ax = plt.subplots(figsize=(11, 7.5), dpi=100)
-
-    ax.set_title(f"Fluxo EP Q{wave}DW – {date:%Y-%m-%d}")
-
-    ax.set_xlabel("Latitude")
-    ax.set_ylabel("Altitude (km)")
-
-    ax.set_xlim(lat_min, lat_max)
-    ax.set_ylim(z_min, z_max)
-
-    ax.set_xticks(np.arange(lat_min, lat_max + 1, 10))
-    ax.set_yticks(np.arange(z_min, z_max + 1, 10))
-
-    ax.grid(alpha=0.2)
-
+    # ax.set_xticks(np.arange(lat_min, lat_max + 1, 10))
+    # ax.set_yticks(np.arange(z_min, z_max + 1, 10))
+ 
     u_plot, v_plot = correct_vector_aspect(
         fig=fig,
         ax=ax,
@@ -399,18 +383,15 @@ def plot_ep_flux(
         visual_scale=visual_scale
     )
 
-    levels_fill = np.linspace(
-        color_range[0],
-        color_range[1],
-        31
-    )
-
+    # levels_fill = np.linspace( color_range[0],  color_range[1], 31 )
+    # print(color_range[0],  color_range[1])
+    levels_fill = np.linspace(-vmax, vmax, 31 )
     contour_fill = ax.contourf(
         lat,
         z,
         acceleration,
         levels=levels_fill,
-        cmap=cmap_vik,
+        cmap= 'seismic', #cmap_vik,
         extend="both"
     )
 
@@ -454,30 +435,16 @@ def plot_ep_flux(
         headaxislength=4.5
     )
 
-    colorbar = fig.colorbar(
-        contour_fill,
-        ax=ax,
-        fraction=0.046,
-        pad=0.04
-    )
+    # colorbar = fig.colorbar(
+    #     contour_fill,
+    #     ax=ax,
+    #     fraction=0.046,
+    #     pad=0.04
+    # )
 
-    colorbar.set_label(
-        "Zonal acceleration (m s$^{-1}$ day$^{-1}$)"
-    )
-
-    fig.tight_layout()
-
-    if output_file is not None:
-        fig.savefig(
-            output_file,
-            dpi=300,
-            bbox_inches="tight",
-            facecolor="white"
-        )
-
-        print(f"Figura salva em:\n{output_file}")
-
-    plt.show()
+    # colorbar.set_label(
+    #     "Zonal acceleration (m s$^{-1}$ day$^{-1}$)"
+    # )
 
     return fig, ax
 
@@ -486,147 +453,113 @@ def plot_ep_flux(
 # 11. FUNÇÃO PRINCIPAL
 # =============================================================================
 
-def main():
-    if not filepath.exists():
-        raise FileNotFoundError(
-            f"Arquivo não encontrado:\n{filepath.resolve()}"
-        )
+ 
 
+def plot_latitude_height_EP(filepath, dn, fig, ax, vmax = 5):
     ds = nc.Dataset(filepath, "r")
+    
+    times, z_geopotential, lat_global = read_coordinates(ds)
 
-    try:
-        times, z_geopotential, lat_global = read_coordinates(ds)
+    z_global = geopotential_to_geometric_height(
+        z_geopotential,
+        earth_radius=R_E
+    )
 
-        z_global = geopotential_to_geometric_height(
-            z_geopotential,
-            earth_radius=R_E
-        )
+    target_date, idx_day = get_day_indices( times,   dn )
 
-        target_date, idx_day = get_day_indices(
-            times,
-            data_plot
-        )
+    (
+        idx_lat,
+        idx_z,
+        order_lat,
+        order_z,
+        lat,
+        z
+    ) = filter_space_indices(
+        lat_global=lat_global,
+        z_global=z_global,
+        lat_min=lat_min_lim,
+        lat_max=lat_max_lim,
+        z_min=z_min_lim,
+        z_max=z_max_lim
+    )
 
-        (
-            idx_lat,
-            idx_z,
-            order_lat,
-            order_z,
-            lat,
-            z
-        ) = filter_space_indices(
-            lat_global=lat_global,
-            z_global=z_global,
-            lat_min=lat_min_lim,
-            lat_max=lat_max_lim,
-            z_min=z_min_lim,
-            z_max=z_max_lim
-        )
+    f_phi = extract_daily_mean(
+        ds=ds,
+        variable_name="F_phi",
+        idx_day=idx_day,
+        idx_z=idx_z,
+        idx_lat=idx_lat,
+        order_z=order_z,
+        order_lat=order_lat
+    )
 
-        f_phi = extract_daily_mean(
-            ds=ds,
-            variable_name="F_phi",
-            idx_day=idx_day,
-            idx_z=idx_z,
-            idx_lat=idx_lat,
-            order_z=order_z,
-            order_lat=order_lat
-        )
+    f_z = extract_daily_mean(
+        ds=ds,
+        variable_name="F_z",
+        idx_day=idx_day,
+        idx_z=idx_z,
+        idx_lat=idx_lat,
+        order_z=order_z,
+        order_lat=order_lat
+    )
 
-        f_z = extract_daily_mean(
-            ds=ds,
-            variable_name="F_z",
-            idx_day=idx_day,
-            idx_z=idx_z,
-            idx_lat=idx_lat,
-            order_z=order_z,
-            order_lat=order_lat
-        )
+    acceleration = extract_daily_mean(
+        ds=ds,
+        variable_name="accel",
+        idx_day=idx_day,
+        idx_z=idx_z,
+        idx_lat=idx_lat,
+        order_z=order_z,
+        order_lat=order_lat
+    )
 
-        acceleration = extract_daily_mean(
-            ds=ds,
-            variable_name="accel",
-            idx_day=idx_day,
-            idx_z=idx_z,
-            idx_lat=idx_lat,
-            order_z=order_z,
-            order_lat=order_lat
-        )
+    validate_fields(
+        lat=lat,
+        z=z,
+        F_phi=f_phi,
+        F_z=f_z,
+        acceleration=acceleration
+    )
 
-        validate_fields(
-            lat=lat,
-            z=z,
-            F_phi=f_phi,
-            F_z=f_z,
-            acceleration=acceleration
-        )
+    color_range = calculate_color_limits(
+        acceleration
+    )
 
-        color_range = calculate_color_limits(
-            acceleration
-        )
-
-        (
-            grid_lats,
-            grid_zs,
-            u_physical,
-            v_physical
-        ) = prepare_vectors(
-            lat=lat,
-            z=z,
-            f_phi=f_phi,
-            f_z=f_z,
-            stride_latitude=stride_lat,
-            stride_altitude=stride_z,
-            scale_height=H,
-            vertical_factor=fator_escala_z
-        )
-
-        if salvar_figura:
-            output_file = (
-                out_dir /
-                f"EPFlux_Q{onda}_{target_date:%Y-%m-%d}.png"
-            )
-        else:
-            output_file = None
-
-        print("\n========== DADOS SELECIONADOS ==========")
-        print(f"Data: {target_date:%Y-%m-%d}")
-        print(f"Horários: {times[idx_day].tolist()}")
-        print(f"Latitude: {lat.min():.2f} a {lat.max():.2f}°")
-        print(f"Altitude: {z.min():.2f} a {z.max():.2f} km")
-        print(f"Shape dos campos: {acceleration.shape}")
-        print(
-            f"Aceleração: {np.nanmin(acceleration):.2f} a "
-            f"{np.nanmax(acceleration):.2f} m s⁻¹ dia⁻¹"
-        )
-        print("========================================\n")
-
-        plot_ep_flux(
-            lat=lat,
-            z=z,
-            acceleration=acceleration,
-            grid_lats=grid_lats,
-            grid_zs=grid_zs,
-            u_physical=u_physical,
-            v_physical=v_physical,
-            date=target_date,
-            wave=onda,
-            color_range=color_range,
-            lat_min=lat_min_lim,
-            lat_max=lat_max_lim,
-            z_min=z_min_lim,
-            z_max=z_max_lim,
-            visual_scale=escala_viz,
-            output_file=output_file
-        )
-
-    finally:
-        ds.close()
+    (
+        grid_lats,
+        grid_zs,
+        u_physical,
+        v_physical
+    ) = prepare_vectors(
+        lat=lat,
+        z=z,
+        f_phi=f_phi,
+        f_z=f_z,
+        stride_latitude=stride_lat,
+        stride_altitude=stride_z,
+        scale_height=H,
+        vertical_factor=fator_escala_z
+    )
 
 
-# =============================================================================
-# EXECUÇÃO
-# =============================================================================
-
-if __name__ == "__main__":
-    main()
+    plot_ep_flux(
+        fig, ax,
+        lat=lat,
+        z=z,
+        acceleration=acceleration,
+        grid_lats=grid_lats,
+        grid_zs=grid_zs,
+        u_physical=u_physical,
+        v_physical=v_physical,
+        date=target_date,
+        wave=onda,
+        color_range=color_range,
+        lat_min=lat_min_lim,
+        lat_max=lat_max_lim,
+        z_min=z_min_lim,
+        z_max=z_max_lim,
+        visual_scale=escala_viz, 
+        vmax = vmax
+    )
+ 
+     
