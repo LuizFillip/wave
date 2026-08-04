@@ -1,7 +1,4 @@
-
-
 from pathlib import Path
-
 import matplotlib.pyplot as plt
 import netCDF4 as nc
 import numpy as np
@@ -22,8 +19,8 @@ filepath = Path(f"JAWARA/data/ep_divs_q{onda}.nc")
 R_E = 6371.0
 H = 7.0
 
-lat_min_lim = 0.0
-lat_max_lim = 90.0
+lat_min_lim = -90
+lat_max_lim = 90
 
 z_min_lim = 10.0
 z_max_lim = 120.0
@@ -31,7 +28,7 @@ z_max_lim = 120.0
 stride_lat = 1
 stride_z = 2
 
-escala_viz = 25.0
+escala_viz = 50.0
 fator_escala_z = 200.0
 
 
@@ -294,16 +291,16 @@ def prepare_vectors(
 # =============================================================================
 
 def correct_vector_aspect(
-    fig,
-    ax,
-    u_physical,
-    v_physical,
-    lat_min,
-    lat_max,
-    z_min,
-    z_max,
-    visual_scale=15.0
-):
+        fig,
+        ax,
+        u_physical,
+        v_physical,
+        lat_min,
+        lat_max,
+        z_min,
+        z_max,
+        visual_scale=15.0
+    ):
     """
     Corrige o tamanho relativo das componentes horizontal e vertical
     considerando a dimensão do eixo na figura.
@@ -449,10 +446,6 @@ def plot_ep_flux(
     return fig, ax
 
 
-# =============================================================================
-# 11. FUNÇÃO PRINCIPAL
-# =============================================================================
-
  
 
 def plot_latitude_height_EP(filepath, dn, fig, ax, vmax = 5):
@@ -561,5 +554,7 @@ def plot_latitude_height_EP(filepath, dn, fig, ax, vmax = 5):
         visual_scale=escala_viz, 
         vmax = vmax
     )
- 
-     
+
+def main():
+    fig, ax = plt.subplots()
+    plot_latitude_height_EP(filepath, dn, fig, ax, vmax = 5)
