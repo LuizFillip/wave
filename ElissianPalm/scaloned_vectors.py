@@ -25,8 +25,8 @@ lat_max_lim = 90
 z_min_lim = 10.0
 z_max_lim = 120.0
 
-stride_lat = 1
-stride_z = 2
+stride_lat = 2
+stride_z = 4
 
 escala_viz = 50.0
 fator_escala_z = 200.0
