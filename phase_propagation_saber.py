@@ -20,12 +20,12 @@ args = dict(
 def show_parameters_infos(ax, res, period):
  
  
-    # lz_std = round(res['lambda_z_std'])
+    lz_std = round(res['lambda_z_std'])
 
     vz_ms = int(abs(res['vz_km_day']))
     lambda_z = int(abs(res['vz_km_day'] * period))
-    # vz_std = round(abs(res['vz_km_day_std']))
-    
+    vz_std = round(abs(res['vz_km_day_std']))
+    print(lz_std, vz_std)
     return (
         f'$V_z$ = {vz_ms} km/day\n' + 
         f'$\lambda_z$ = {lambda_z} km '
@@ -248,26 +248,27 @@ def phase_analysis(
     
     return fig 
     
-def main():
-    df_main = sb.saber_data('SABER/data/saber_mean_2025')
-       
-      
-    
-    ds_all = sb.join_heights_by_lon_ref(
-         df_main, 
-         bandpass = (2.2, 15),
-         lat_center = -7,
-         ref_lon = -30,
-         normalize = False,
-         ) 
-    alts = [int(c[5:]) for c in df_main.columns if 'temp' in c]
-    
-    fig = phase_analysis(
-        ds_all,
-        lat_center =  -7,
-        period = 6.25,
-        limits = (60, 90)
-        )
-    
-    
-    ds_all 
+# def main():
+df_main = sb.saber_data('SABER/data/saber_mean_2025')
+   
+  
+
+ds_all = sb.join_heights_by_lon_ref(
+     df_main, 
+     bandpass = (2.2, 15),
+     lat_center = -7,
+     ref_lon = -30,
+     normalize = False,
+     ) 
+alts = [int(c[5:]) for c in df_main.columns if 'temp' in c]
+
+fig = phase_analysis(
+    ds_all,
+    alts,
+    lat_center =  -7,
+    period = 6.25,
+    limits = (60, 90)
+    )
+
+
+ds_all 
