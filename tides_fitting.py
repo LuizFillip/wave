@@ -79,8 +79,12 @@ result, coef = remove_solar_tides(
     value_col="value",
     periods_hours=[24, 12, 8, 6]
 )
-
-plt.figure(figsize=(12, 5))
+fig, ax = plt.subplots(
+    figsize = (12, 5), 
+    dpi = 300, 
+    
+    )
+plt.figure()
 plt.plot(result["time"], result["value"], label="Série original", alpha=0.6)
 plt.plot(result["time"], result["tide_fit"], label="Marés ajustadas", linewidth=2)
 plt.legend()

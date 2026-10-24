@@ -113,55 +113,56 @@ def evaluate_vertical_wave_periods(results_by_period):
 
 
 
-
-infile = 'SABER/data/saber_mean_2025'
-df_main = sb.saber_data(infile)
- 
-
-alts = [int(c[5:]) for c in df_main.columns if 'temp' in c]
-
-
-lat_center = -7
-ref_lon = -30
-
-
-ds_all = sb.join_heights_by_lon_ref(
-     df_main, 
-     bandpass = (2.2, 12),
-     lat_center = lat_center,
-     ref_lon = ref_lon,
-     normalize = False
-     )
- 
-start, end = 50, 90
-
-ds = ds_all.loc[ (ds_all.index >= start) & (ds_all.index <= end) ].copy()
-ds.columns = alts
-
-
-
-
-ds.columns = alts 
-
-results_by_period = {}
-for period in np.arange(5, 7, 0.1):
+def main():
+    infile = 'SABER/data/saber_mean_2025'
+    df_main = sb.saber_data(infile)
+     
+    
+    alts = [int(c[5:]) for c in df_main.columns if 'temp' in c]
+    
+    
+    lat_center = -7
+    ref_lon = -30
+    
+    
+    ds_all = sb.join_heights_by_lon_ref(
+         df_main, 
+         bandpass = (2.2, 12),
+         lat_center = lat_center,
+         ref_lon = ref_lon,
+         normalize = False
+         )
+     
+    start, end = 50, 90
+    
+    ds = ds_all.loc[ (ds_all.index >= start) & (ds_all.index <= end) ].copy()
+    ds.columns = alts
+    
+    
+    
+    
+    ds.columns = alts 
+    
+    results_by_period = {}
+    # for period in np.arange(5, 7, 0.1):
+    period = 6
     ds1 = wv.get_wave_parameters_for_alts( ds,  period)
     
     results_by_period[period] = ds1
+        
+    metrics = evaluate_vertical_wave_periods(results_by_period)
+     
+    # print(metrics[[
+    #     "period",
+    #     "score",
+    #     "r2_phase_altitude", 
+    #     "lambda_z_km",
+    #     "vz_ms"
+    # ]])
     
-metrics = evaluate_vertical_wave_periods(results_by_period)
- 
-print(metrics[[
-    "period",
-    "score",
-    "r2_phase_altitude", 
-    "lambda_z_km",
-    "vz_ms"
-]])
-
-# # best_period = metrics.iloc[0]["period"]
-# # print("Best period:", best_period)
- 
- 
+    # # best_period = metrics.iloc[0]["period"]
+    # # print("Best period:", best_period)
+     
+    metrics.T
 
             

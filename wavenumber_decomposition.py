@@ -55,48 +55,62 @@ def zonal_propagation(ds, period_min=3, period_max=20):
 
  
 def plot_zonalnumber_decomposition(
-        ax,  ds,
+        ax,  
+        ds,
         period_min = 2.5, 
         period_max = 20,
-        y = 0.85,
-        x = 0.05,
         fontsize = 30,
         colorbar = False,
-        color_s = 'w'
+       
+        max_lambda = 5
         ):
     
     
-    S,  P, power_pos = zonal_propagation(
+    wavenumber,  period, power = zonal_propagation(
         ds, 
         period_min = period_min, 
-        period_max = period_max
+        period_max = period_max + 2
         )
-  
+    
+    mask = (
+    (period >= period_min) & (period <= period_max + 2) &
+    (wavenumber >= -max_lambda) & (wavenumber <= max_lambda)
+    )
+    
+ 
+    wavenumber = np.where(mask, wavenumber, np.nan)
+    period = np.where(mask, period, np.nan)
+    power = np.where(mask, power, np.nan)
+ 
     img = ax.contourf(
-        S, P, 
-        power_pos,
+        wavenumber, 
+        period, 
+        power,
         levels = 50,
         cmap = "turbo"
     )
-
-    ax.axvline(0, color="w", linewidth=1.2)
+     
+    ax.axvline(0, color="w", linewidth=1.2) 
     
-   
+    y =  period_max - 1
+    
+    color_s = 'w'
+    x = max_lambda // 2 -1
+    
     ax.text(
-        x, y, "Westward", 
-        transform = ax.transAxes,
-        ha ="left",
-        va = "bottom", 
-        fontsize=fontsize, 
+         x, y, "Eastward", 
+        transform = ax.transData,
+        ha = "left", 
+        fontsize = fontsize, 
         color=color_s
         )
-
+    
+    x = -max_lambda // 2 
     ax.text(
-        0.6 + x, y, "Eastward", 
-        transform = ax.transAxes,
-        ha = "left",
-        va = "bottom",
-        fontsize = fontsize, 
+        x, y, "Westward", 
+        transform = ax.transData,
+        ha ="right", 
+        fontsize=fontsize, 
         color=color_s
         )
 
@@ -107,10 +121,11 @@ def plot_zonalnumber_decomposition(
     ax.set(
         xlabel= "Zonal wave number",
         ylabel= "Period (days)",
-        xlim = [-5, 5],
-        xticks = np.arange(-5, 6, 1),
-        ylim = [period_min, period_max - 5],
-        yticks = np.arange(3, 15, 2),
+        xlim = [-max_lambda, max_lambda],
+        xticks = np.arange(-max_lambda, max_lambda + 1, 1),
+        yticks = np.arange(round(period_min), period_max + 2, 2),
+        ylim = [period_min, period_max],
+        
         
     )
     
@@ -125,7 +140,6 @@ def plot_zonalnumber_decomposition(
             orientation = "vertical", 
             anchor = (.1, 0., 1, 1)
             ) 
-     
-   
-    return None
+    else:
+        return img
 

@@ -1,14 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jul 28 22:16:16 2026
-
-@author: Luiz
-"""
-
+import numpy as np 
 import JAWARA as jw 
 import matplotlib.pyplot as plt
 import pandas as pd
-
+import base as b 
 # ds = jw.concat_datasets(
 #     "U",
 #     latitude=-7,
@@ -16,7 +10,31 @@ import pandas as pd
 # )
   
  
- 
+
+"""
+Calcula e plota:
+
+1. Diagrama longitude-tempo filtrado.
+2. Decomposição número de onda-período.
+
+Parameters
+----------
+ds : xarray.Dataset
+    Dataset contendo longitude, level/altitude, time/doy e a variável.
+variable : str
+    Nome da variável, por exemplo 'u'.
+altitude : float
+    Altitude-alvo em km.
+doy_range : tuple
+    Intervalo de dia do ano, por exemplo (50, 90).
+bandpass : tuple
+    Banda de períodos usada em pass_band_2d.
+period_min, period_max : float
+    Limites do eixo de período na decomposição espectral.
+remove_time_mean : bool
+    Remove a média temporal em cada longitude antes do filtro.
+"""
+
 
 def wavenumber_jawara(
     ds,
@@ -31,30 +49,6 @@ def wavenumber_jawara(
     cmap="seismic",
     levels=31,
 ):
-    """
-    Calcula e plota:
-
-    1. Diagrama longitude-tempo filtrado.
-    2. Decomposição número de onda-período.
-
-    Parameters
-    ----------
-    ds : xarray.Dataset
-        Dataset contendo longitude, level/altitude, time/doy e a variável.
-    variable : str
-        Nome da variável, por exemplo 'u'.
-    altitude : float
-        Altitude-alvo em km.
-    doy_range : tuple
-        Intervalo de dia do ano, por exemplo (50, 90).
-    bandpass : tuple
-        Banda de períodos usada em pass_band_2d.
-    period_min, period_max : float
-        Limites do eixo de período na decomposição espectral.
-    remove_time_mean : bool
-        Remove a média temporal em cada longitude antes do filtro.
-    """
-
     # ---------------------------------------------------------
     # 1. Seleção da variável
     # ---------------------------------------------------------
