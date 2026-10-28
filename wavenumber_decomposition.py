@@ -61,7 +61,6 @@ def plot_zonalnumber_decomposition(
         period_max = 20,
         fontsize = 30,
         colorbar = False,
-       
         max_lambda = 5
         ):
     
@@ -102,16 +101,16 @@ def plot_zonalnumber_decomposition(
         transform = ax.transData,
         ha = "left", 
         fontsize = fontsize, 
-        color=color_s
+        color = color_s
         )
     
-    x = -max_lambda // 2 
+    x = -max_lambda // 2 -1
     ax.text(
         x, y, "Westward", 
         transform = ax.transData,
-        ha ="right", 
-        fontsize=fontsize, 
-        color=color_s
+        ha = "left", 
+        fontsize = fontsize, 
+        color = color_s
         )
 
  
